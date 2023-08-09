@@ -1,0 +1,37 @@
+New-Item -ItemType Directory -Path "C:\Users\Jpba6\OneDrive\Imagens\teste_poweshell"
+
+
+$url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAcWG9y-cDVMBbnM3UO0lvDcmFtSXJZG3KwCz-_VTW-A&s"
+$destino = "C:\Users\Jpba6\OneDrive\Imagens\teste_poweshell\teste_powershell.jpg"
+$wc = New-Object System.Net.WebClient
+try {
+  $wc.DownloadFile($url, $destino)
+    Write-Host "Imagem baixada com sucesso!"
+}
+catch {
+    Write-Host "Falha ao baixar a imagem: $_"
+}
+
+
+
+$filePath = "C:\Users\Jpba6\OneDrive\Imagens\teste_poweshell\teste_powershell.jpg"  # Defina o caminho completo da imagem que deseja definir como papel de parede
+
+# Define o papel de parede do usuário atual
+[System.IO.Path]::Combine($env:windir, "System32\RUNDLL32.EXE") `
+    (Join-Path $env:windir "System32\shimgvw.dll"), `
+    "/setwallpaper $filePath"
+
+# Atualiza a configuração do papel de parede 
+$signature = @"
+[DllImport("user32.dll", CharSet = CharSet.Auto)]
+public static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+"@
+
+$SPI_SETDESKWALLPAPER = 0x0014
+$SPIF_UPDATEINIFILE = 0x01
+$SPIF_SENDCHANGE = 0x02
+
+$winIniFlags = $SPIF_UPDATEINIFILE -bor $SPIF_SENDCHANGE
+
+$desktop = Add-Type -MemberDefinition $signature -Name DesktopUtil -Namespace WinAPI -PassThru
+$desktop::SystemParametersInfo($SPI_SETDESKWALLPAPER, 0, $filePath, $winIniFlags)
